@@ -13,7 +13,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
-import cn.jhc.criminalintent.model.Crime;
+import cn.jhc.criminalintent.bean.Crime;
 import cn.jhc.criminalintent.util.TimeUtil;
 
 /**

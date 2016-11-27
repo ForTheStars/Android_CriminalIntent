@@ -1,4 +1,4 @@
-package cn.jhc.criminalintent.model;
+package cn.jhc.criminalintent.bean;
 
 import java.util.Date;
 import java.util.UUID;
