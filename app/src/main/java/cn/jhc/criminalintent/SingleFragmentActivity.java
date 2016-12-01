@@ -7,6 +7,8 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
+import cn.jhc.criminalintent.util.LogUtils;
+
 /**
  * Created by Administrator on 2016-11-27.
  * 模板方法模式
@@ -23,7 +25,7 @@ public abstract class SingleFragmentActivity extends FragmentActivity{
         Fragment fragment = manager.findFragmentById(R.id.fragment_container);
 
         if(fragment == null) {
-            Log.d("TAP","SingleFragmentActivity");
+            LogUtils.d(LogUtils.LOG_TAG,"SingleFragmentActivity");
             fragment = createFragment();
             manager.beginTransaction()
                     .add(R.id.fragment_container,fragment)
