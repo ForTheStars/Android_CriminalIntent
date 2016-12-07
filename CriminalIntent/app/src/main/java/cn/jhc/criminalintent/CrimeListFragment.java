@@ -1,5 +1,6 @@
 package cn.jhc.criminalintent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -13,16 +14,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.UUID;
 
 import cn.jhc.criminalintent.bean.Crime;
 import cn.jhc.criminalintent.db.CrimeLab;
+import cn.jhc.criminalintent.util.LogUtils;
 
 /**
  * Created by Administrator on 2016-11-27.
  */
 public class CrimeListFragment extends Fragment{
+
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    private static final int REQUEST_CRIME = 1;
 
     @Nullable
     @Override
@@ -34,12 +39,21 @@ public class CrimeListFragment extends Fragment{
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
+
     private void updateUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
-
-        mAdapter = new CrimeAdapter(crimes);
-        mCrimeRecyclerView.setAdapter(mAdapter);
+        if(mAdapter == null) {
+            mAdapter = new CrimeAdapter(crimes);
+            mCrimeRecyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener
@@ -66,7 +80,18 @@ public class CrimeListFragment extends Fragment{
 
         @Override
         public void onClick(View view) {
-            Toast.makeText(getActivity(),mCrime.getmTitle() + "clicked!", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(),mCrime.getmTitle() + "clicked!", Toast.LENGTH_SHORT).show();
+            Intent intent = CrimePagerActivity.newIntent(getActivity(),mCrime.getmId());
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == REQUEST_CRIME) {
+            String title = (String) data.getExtras().get("mcrime_id");
+            LogUtils.e(LogUtils.LOG_TAG,title);
         }
     }
 
