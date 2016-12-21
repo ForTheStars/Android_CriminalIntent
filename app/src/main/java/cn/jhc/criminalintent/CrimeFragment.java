@@ -1,6 +1,8 @@
 package cn.jhc.criminalintent;
 
 import android.app.Activity;
+import android.app.ListActivity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,6 +13,7 @@ import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.ShareCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -24,6 +27,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.util.Date;
 import java.util.UUID;
@@ -41,12 +45,14 @@ public class CrimeFragment extends Fragment {
     private static final String DIALOG_DATE = "DialogDate";
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_CONTACT = 1;
+    private static final int REQUEST_CALL = 2;
     private Crime mCrime;
     private EditText mTitleField;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
     private Button mReportButton;
     private Button mSuspectButton;
+    private Button mCallPhone;
 
     public static CrimeFragment newIntent(UUID crimeId) {
         Bundle args = new Bundle();
@@ -115,7 +121,7 @@ public class CrimeFragment extends Fragment {
         });
 
         mReportButton = (Button) view.findViewById(R.id.crime_report);
-        mReportButton.setOnClickListener(new View.OnClickListener() {
+        /*mReportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent i = new Intent(Intent.ACTION_SEND);
@@ -123,6 +129,17 @@ public class CrimeFragment extends Fragment {
                 i.putExtra(Intent.EXTRA_TEXT,getCrimeReport());
                 i.putExtra(Intent.EXTRA_SUBJECT,getString(R.string.crime_report_subject));
                 i = Intent.createChooser(i,getString(R.string.send_reort));
+                startActivity(i);
+            }
+        });*/
+        mReportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ShareCompat.IntentBuilder intentBuilder = ShareCompat.IntentBuilder.from(getActivity());
+                intentBuilder.setType("text/plain");
+                intentBuilder.setText(getCrimeReport());
+                intentBuilder.setSubject(getString(R.string.crime_report_subject));
+                Intent i = intentBuilder.createChooserIntent();
                 startActivity(i);
             }
         });
@@ -140,6 +157,14 @@ public class CrimeFragment extends Fragment {
         if(mCrime.getmSuspect() != null) {
             mSuspectButton.setText(mCrime.getmSuspect());
         }
+
+        mCallPhone = (Button) view.findViewById(R.id.crime_phone);
+        mCallPhone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivityForResult(pickContact,REQUEST_CALL);
+            }
+        });
 
         PackageManager packageManager = getActivity().getPackageManager();
         if(packageManager.resolveActivity(pickContact,PackageManager.MATCH_DEFAULT_ONLY) == null) {
@@ -178,7 +203,42 @@ public class CrimeFragment extends Fragment {
             String suspect = cursor.getString(0);
             mCrime.setmSuspect(suspect);
             mSuspectButton.setText(suspect);
+        } else if(requestCode == REQUEST_CALL && data != null) {
+            LogUtils.i(LogUtils.LOG_TAG,"call");
+            Uri contactUri = data.getData();
+            String[] queryFields = new String[] {
+                    ContactsContract.Contacts._ID,ContactsContract.Contacts.DISPLAY_NAME
+            };
+            Cursor cursor = getActivity().getContentResolver().query(contactUri,queryFields,null,null,null);
+            if(cursor.getCount() == 0) {
+                return;
+            }
+            cursor.moveToFirst();
+            int telId = cursor.getInt(0);
+            String telP = cursor.getString(1);
+            LogUtils.i(LogUtils.LOG_TAG,"id+"+telId+"~~"+telP);
+            getPhoneNumber(telId);
         }
+    }
+    private void getPhoneNumber(int telId) {
+        LogUtils.i(LogUtils.LOG_TAG,telId+"");
+        String column = ContactsContract.CommonDataKinds.Phone.CONTACT_ID;
+        String[] queryFields = new String[] {
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+        };
+        Cursor phone=getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,column+"="+telId,null,null);
+        phone.moveToFirst();
+        String phoneNumber=phone.getString(0);
+        LogUtils.i(LogUtils.LOG_TAG,phoneNumber);
+        //callPhone(phoneNumber);
+        LogUtils.i(LogUtils.LOG_TAG,phone == null ? "yes" : "no");
+    }
+    private void callPhone(String phoneNumber) {
+        Uri numUri = Uri.parse("tel:"+phoneNumber);
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_CALL);
+        intent.setData(numUri);
+        startActivity(intent);
     }
 
     @Override
