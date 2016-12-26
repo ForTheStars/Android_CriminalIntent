@@ -27,6 +27,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.Date;
@@ -53,6 +55,9 @@ public class CrimeFragment extends Fragment {
     private Button mReportButton;
     private Button mSuspectButton;
     private Button mCallPhone;
+    private ImageButton mPhotoButton;
+    private ImageView mPhotoView;
+
 
     public static CrimeFragment newIntent(UUID crimeId) {
         Bundle args = new Bundle();
@@ -170,6 +175,8 @@ public class CrimeFragment extends Fragment {
         if(packageManager.resolveActivity(pickContact,PackageManager.MATCH_DEFAULT_ONLY) == null) {
             mSuspectButton.setEnabled(false);
         }
+        mPhotoButton = (ImageButton) view.findViewById(R.id.crime_camera);
+        mPhotoView = (ImageView) view.findViewById(R.id.crime_photo);
         return view;
     }
 
@@ -226,12 +233,10 @@ public class CrimeFragment extends Fragment {
         String[] queryFields = new String[] {
                 ContactsContract.CommonDataKinds.Phone.NUMBER
         };
-        Cursor phone=getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,column+"="+telId,null,null);
+        Cursor phone=getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,queryFields,column+"="+telId,null,null);
         phone.moveToFirst();
         String phoneNumber=phone.getString(0);
-        LogUtils.i(LogUtils.LOG_TAG,phoneNumber);
-        //callPhone(phoneNumber);
-        LogUtils.i(LogUtils.LOG_TAG,phone == null ? "yes" : "no");
+        callPhone(phoneNumber);
     }
     private void callPhone(String phoneNumber) {
         Uri numUri = Uri.parse("tel:"+phoneNumber);
